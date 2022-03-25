@@ -37,6 +37,9 @@ namespace OsEngine.Robots
         public static List<string> GetNamesStrategy()
         {
             List<string> result = new List<string>();
+
+            result.Add("Scalper");
+
             result.Add("SmaScreener");
             result.Add("Fisher");
             result.Add("Engine");
@@ -118,6 +121,11 @@ namespace OsEngine.Robots
                 return bot;
             }
 
+            if (nameClass == "Scalper")
+            {
+                bot = new Scalper(name, startProgram);
+            }
+ 
             if (nameClass == "SmaScreener")
             {
                 bot = new SmaScreener(name, startProgram);
