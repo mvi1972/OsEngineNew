@@ -42,7 +42,7 @@ namespace OsEngine.Robots
         private void TryOpenPosition(List<Candle> candles)
         {
             decimal lastPrice = candles[candles.Count - 1].Close;
-            // проверка индикатора
+            // проверка индикатора 
         }
     }
-}
+}// темт 
