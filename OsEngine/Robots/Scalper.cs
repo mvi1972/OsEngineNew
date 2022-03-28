@@ -12,28 +12,31 @@ namespace OsEngine.Robots
 {
     public class Scalper : BotPanel
     {
-        // публичные настройки
-        /// <summary>
-        /// вкл/выкл для робота
-        /// </summary>
-        public bool IsOn;
-
+        // публичные переменные 
         /// <summary>
         /// вкл/выкл для бумаги
         /// </summary>
         public bool IsOnPapir;
-
-        // публичные переменные 
         /// <summary>
         /// цена начала фазы роста
         /// </summary>
         public decimal PriceGrowthPhase;
+        /// <summary>
+        /// значение фазы роста
+        /// </summary>
+        public bool PhaseGrowth;
+
+        // настройки на параметрах 
+        private StrategyParameterInt CandleBack;
+        /// <summary>
+        /// вкл/выкл для робота
+        /// </summary>
+        private StrategyParameterBool IsOn;
 
         /// <summary>
         /// вкладка через которую робот совершает торговлю
         /// </summary>
         private BotTabSimple _tab;
-
 
         /// <summary>
         /// конструктор 
@@ -56,10 +59,20 @@ namespace OsEngine.Robots
 
         // логика 
         /// <summary>
-        /// расчет точки роста
+        /// расчет фазы роста
         /// </summary>
-        private void СalculationPointGrowth(List<Candle> candles)
+        private void СalculationPhaseGrowth(List<Candle> candles)
         {
+            /*
+             *  если тру выходим 
+            взять значение открытия свечи Н баров назад 
+            взять значение закрытия последней свечи 
+            рассчитать заданное значение в заданных процентах 
+            если совпадает 
+            ставим в PhaseGrowth значение тру
+            записываем значение цены в PriceGrowthPhase
+
+             */
 
         }
 
@@ -74,7 +87,7 @@ namespace OsEngine.Robots
 
         // сервис
 
-               /// <summary>
+        /// <summary>
         /// проверить условия на вход в позицию
         /// </summary>
 
