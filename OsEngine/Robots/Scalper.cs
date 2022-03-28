@@ -43,7 +43,6 @@ namespace OsEngine.Robots
         /// </summary>
         public Scalper(string name, StartProgram startProgram) : base(name, startProgram)
         {
-
             TabCreate(BotTabType.Simple);
             _tab = TabsSimple[0];
             _tab.CandleFinishedEvent += _tab_CandleFinishedEvent;
