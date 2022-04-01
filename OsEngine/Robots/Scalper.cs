@@ -26,7 +26,7 @@ namespace OsEngine.Robots
         /// <summary>
         /// цена начала фазы роста
         /// </summary>
-        public decimal PriceGrowthPhase;
+        public decimal priceGrowthPhase;
 
         /// <summary>
         /// значение фазы роста
@@ -43,6 +43,11 @@ namespace OsEngine.Robots
         private StrategyParameterBool IsOn;
 
         /// <summary>
+        /// рабочий объём сделки
+        /// </summary>
+        private StrategyParameterInt volume; // для тестов
+
+        /// <summary>
         /// количество свечей зоны роста
         /// </summary>
         private StrategyParameterInt candleBack;
@@ -51,6 +56,11 @@ namespace OsEngine.Robots
         /// процентная величина зоны роста
         /// </summary>
         private StrategyParameterDecimal growthPercent;
+
+        /// <summary>
+        /// расстояние до трейдинг стопа в процентах
+        /// </summary>
+        private StrategyParameterDecimal TrailStopLength;
 
         #endregion настройки на параметрах
 
@@ -67,17 +77,43 @@ namespace OsEngine.Robots
             _tab = TabsSimple[0];
             _tab.CandleFinishedEvent += _tab_CandleFinishedEvent;
 
+            phaseGrowth = false; // значение при создании
+
+            IsOn = CreateParameter("Включить", false);
+            volume = CreateParameter("рабочий объём", 1, 1, 1, 1); // тестовые значения
             candleBack = CreateParameter("Зона роста сколько свечей", 10, 5, 20, 1);
             growthPercent = CreateParameter("Процент роста бумаги", 3m, 2, 10, 1);
+            TrailStopLength = CreateParameter("Процент Трейлинг стопа", 1.5m, 2, 10, 1);
         }
 
         #endregion конструктор
 
         /// <summary>
-        /// событие завершения новой свечи
+        /// событие завершения новой свечи главный вход в логику
         /// </summary>
         private void _tab_CandleFinishedEvent(List<Candle> candles)
         {
+            if (IsOn.ValueBool == false) // если робот выключен
+            {
+                return;
+            }
+            List<Position> positions = _tab.PositionsOpenAll;
+            if (positions.Count == 0) // логика входа
+            {
+                СalculationPhaseGrowth(candles);
+                if (phaseGrowth == false)
+                {
+                    return;
+                }
+                // проверка индикатора
+
+                decimal lastPrice = _tab.PriceBestAsk;
+                _tab.BuyAtMarket(volume.ValueInt); // тестовый вход
+            }
+            else // логика выхода
+            {
+                TrelingStop();
+            }
         }
 
         #region Логика
@@ -153,13 +189,22 @@ namespace OsEngine.Robots
         /// </summary>
         private void TryOpenPosition(List<Candle> candles)
         {
-            СalculationPhaseGrowth(candles);
-            if (phaseGrowth == false)
+        }
+
+        private void TrelingStop() // трейлинг стоп для начала тестов
+        {
+            List<Position> position = _tab.PositionsOpenAll;
+            if (position.Count == 0)
             {
                 return;
             }
-            decimal lastPrice = candles[candles.Count - 1].Close;
-            // проверка индикатора
+            else
+            {
+                decimal lastPrice = _tab.PriceBestAsk;
+                decimal trailActiv = lastPrice - lastPrice * TrailStopLength.ValueDecimal / 100;
+                decimal trailOrder = trailActiv - 5 * _tab.Securiti.PriceStep;
+                _tab.CloseAtTrailingStop(position[0], trailActiv, trailOrder);
+            }
         }
 
         #endregion Логика
