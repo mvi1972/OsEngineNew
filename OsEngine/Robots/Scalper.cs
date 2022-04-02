@@ -73,6 +73,9 @@ namespace OsEngine.Robots
 
         public Scalper(string name, StartProgram startProgram) : base(name, startProgram)
         {
+            // для теста
+            Tail = true;
+
             TabCreate(BotTabType.Simple);
             _tab = TabsSimple[0];
             _tab.CandleFinishedEvent += _tab_CandleFinishedEvent;
@@ -134,23 +137,26 @@ namespace OsEngine.Robots
             {
                 for (int i = candles.Count - 1; i > 0 && i > candles.Count - 1 - canBack; i--)
                 { // вычисляем значения открытия и закрытия свечей
-                    if (candles[i].Close > maxBodyClose)
+                    if (candles[i].IsUp)
                     {
-                        maxBodyClose = candles[i].Close;
-                    }
-                    if (candles[i].Open < minBodyOpen)
-                    {
-                        minBodyOpen = candles[i].Open;
-                    }
-                    decimal move = maxBodyClose - minBodyOpen;
-                    if (move > 0)
-                    {
-                        decimal moveInPepcent = move / minBodyOpen * 100; // изменение значение в процентах
-                        if (moveInPepcent >= growthPercent.ValueDecimal)
+                        if (candles[i].Close > maxBodyClose)
                         {
-                            /*  ставим в phaseGrowth значение тру
-                            записываем значение цены в PriceGrowthPhase */
-                            phaseGrowth = true;
+                            maxBodyClose = candles[i].Close;
+                        }
+                        if (candles[i].Open < minBodyOpen)
+                        {
+                            minBodyOpen = candles[i].Open;
+                        }
+                        decimal move = maxBodyClose - minBodyOpen;
+                        if (maxBodyClose > minBodyOpen)
+                        {
+                            decimal moveInPepcent = move / minBodyOpen * 100; // изменение значение в процентах
+                            if (moveInPepcent >= growthPercent.ValueDecimal)
+                            {
+                                /*  ставим в phaseGrowth значение тру
+                                записываем значение цены в PriceGrowthPhase */
+                                phaseGrowth = true;
+                            }
                         }
                     }
                     else phaseGrowth = false;
@@ -158,16 +164,11 @@ namespace OsEngine.Robots
             }
             if (Tail == true) // расчет по свечам с хвостами
             {
-                for (int i = candles.Count - 1; i > 0 && i > candles.Count - 1 - canBack; i--)
-                {   // вычисляем значения High и Low
-                    if (candles[i].High > maxCandlesHigh)
-                    {
-                        maxCandlesHigh = candles[i].High;
-                    }
-                    if (candles[i].Low < minCandelesLow)
-                    {
-                        minCandelesLow = candles[i].Low;
-                    }
+                maxCandlesHigh = candles[candles.Count - 1 - canBack].High;
+                minCandelesLow = candles[candles.Count - 1].Low;
+
+                if (maxCandlesHigh < minCandelesLow)
+                {
                     decimal move = maxCandlesHigh - minCandelesLow;
                     if (move > 0)
                     {
@@ -191,7 +192,7 @@ namespace OsEngine.Robots
         {
         }
 
-        private void TrelingStop() // трейлинг стоп для начала тестов
+        private void TrelingStop() // трейлинг стоп для тестов
         {
             List<Position> position = _tab.PositionsOpenAll;
             if (position.Count == 0)
