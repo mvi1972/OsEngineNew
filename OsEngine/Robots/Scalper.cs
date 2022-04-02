@@ -74,7 +74,7 @@ namespace OsEngine.Robots
         public Scalper(string name, StartProgram startProgram) : base(name, startProgram)
         {
             // для теста
-            Tail = true;
+            Tail = false;
 
             TabCreate(BotTabType.Simple);
             _tab = TabsSimple[0];
@@ -103,7 +103,7 @@ namespace OsEngine.Robots
             List<Position> positions = _tab.PositionsOpenAll;
             if (positions.Count == 0) // логика входа
             {
-                СalculationPhaseGrowth(candles);
+                СalculationPhaseGrowthExtremeCandels(candles);
                 if (phaseGrowth == false)
                 {
                     return;
@@ -122,9 +122,50 @@ namespace OsEngine.Robots
         #region Логика
 
         /// <summary>
-        /// расчет фазы роста
+        /// расчет фазы роста по цене крайних свечей
         /// </summary>
-        private void СalculationPhaseGrowth(List<Candle> candles)
+        private void СalculationPhaseGrowthExtremeCandels(List<Candle> candles)
+        {
+            int canBack = candleBack.ValueInt;
+            if (candles.Count < canBack + 1)
+            {
+                return;
+            }
+            decimal maxBodyClose = candles[candles.Count - 1].Close; //максимальное значение закрытия последней свечи периода
+            decimal minBodyOpen = candles[candles.Count - 1 - canBack].Open; //минимальное значение открытия первой свечи периода
+            decimal highPriceOutPeriod = candles[candles.Count - 1].High; // цена хая последней свечи периода
+            decimal lowPriceInPerod = candles[candles.Count - 1 - canBack].Low; // цена  лоя начальной свечи периода
+
+            if (Tail == false) //если галочка по хвостам ложь считаем по телам
+            {
+                decimal rost = maxBodyClose - minBodyOpen;
+                decimal rostPers = rost / minBodyOpen * 100;
+                if (rostPers >= growthPercent.ValueDecimal)
+                {
+                    /*  ставим в phaseGrowth значение тру
+                      записываем значение цены в PriceGrowthPhase */
+                    phaseGrowth = true;
+                }
+                else phaseGrowth = false;
+            }
+            if (Tail == true) // расчет по свечам с хвостами
+            {
+                decimal rost = highPriceOutPeriod - lowPriceInPerod;
+                decimal rostPers = rost / lowPriceInPerod * 100;
+                if (rostPers >= growthPercent.ValueDecimal)
+                {
+                    /*  ставим в phaseGrowth значение тру
+                      записываем значение цены в PriceGrowthPhase */
+                    phaseGrowth = true;
+                }
+                else phaseGrowth = false;
+            }
+        }
+
+        /// <summary>
+        /// расчет фазы роста по изменению  цен  внутри свечей периода
+        /// </summary>
+        private void СalculationPhaseGrowthInsideCandels(List<Candle> candles)
         {
             int canBack = candleBack.ValueInt;
 
@@ -137,26 +178,23 @@ namespace OsEngine.Robots
             {
                 for (int i = candles.Count - 1; i > 0 && i > candles.Count - 1 - canBack; i--)
                 { // вычисляем значения открытия и закрытия свечей
-                    if (candles[i].IsUp)
+                    if (candles[i].Close > maxBodyClose)
                     {
-                        if (candles[i].Close > maxBodyClose)
+                        maxBodyClose = candles[i].Close;
+                    }
+                    if (candles[i].Open < minBodyOpen)
+                    {
+                        minBodyOpen = candles[i].Open;
+                    }
+                    decimal move = maxBodyClose - minBodyOpen;
+                    if (move > 0)
+                    {
+                        decimal moveInPepcent = move / minBodyOpen * 100; // изменение значение в процентах
+                        if (moveInPepcent >= growthPercent.ValueDecimal)
                         {
-                            maxBodyClose = candles[i].Close;
-                        }
-                        if (candles[i].Open < minBodyOpen)
-                        {
-                            minBodyOpen = candles[i].Open;
-                        }
-                        decimal move = maxBodyClose - minBodyOpen;
-                        if (maxBodyClose > minBodyOpen)
-                        {
-                            decimal moveInPepcent = move / minBodyOpen * 100; // изменение значение в процентах
-                            if (moveInPepcent >= growthPercent.ValueDecimal)
-                            {
-                                /*  ставим в phaseGrowth значение тру
-                                записываем значение цены в PriceGrowthPhase */
-                                phaseGrowth = true;
-                            }
+                            /*  ставим в phaseGrowth значение тру
+                            записываем значение цены в PriceGrowthPhase */
+                            phaseGrowth = true;
                         }
                     }
                     else phaseGrowth = false;
@@ -164,11 +202,16 @@ namespace OsEngine.Robots
             }
             if (Tail == true) // расчет по свечам с хвостами
             {
-                maxCandlesHigh = candles[candles.Count - 1 - canBack].High;
-                minCandelesLow = candles[candles.Count - 1].Low;
-
-                if (maxCandlesHigh < minCandelesLow)
-                {
+                for (int i = candles.Count - 1; i > 0 && i > candles.Count - 1 - canBack; i--)
+                {   // вычисляем значения High и Low
+                    if (candles[i].High > maxCandlesHigh)
+                    {
+                        maxCandlesHigh = candles[i].High;
+                    }
+                    if (candles[i].Low < minCandelesLow)
+                    {
+                        minCandelesLow = candles[i].Low;
+                    }
                     decimal move = maxCandlesHigh - minCandelesLow;
                     if (move > 0)
                     {
