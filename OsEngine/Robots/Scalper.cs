@@ -6,12 +6,13 @@ using OsEngine.Entity;
 using OsEngine.Market;
 using OsEngine.OsTrader.Panels;
 using OsEngine.OsTrader.Panels.Tab;
+using OsEngine.Indicators;
 
 namespace OsEngine.Robots
 {
     public class Scalper : BotPanel
     {
-        #region публичные переменные
+        #region переменные
 
         /// <summary>
         /// вкл/выкл для бумаги
@@ -33,7 +34,7 @@ namespace OsEngine.Robots
         /// </summary>
         public bool phaseGrowth;
 
-        #endregion публичные переменные
+        #endregion переменные
 
         #region настройки на параметрах
 
@@ -57,6 +58,10 @@ namespace OsEngine.Robots
         /// </summary>
         private StrategyParameterDecimal growthPercent;
 
+        private StrategyParameterInt Longterm;
+        private StrategyParameterInt DSR1;
+        private StrategyParameterInt DSR2;
+
         /// <summary>
         /// расстояние до трейдинг стопа в процентах
         /// </summary>
@@ -69,6 +74,9 @@ namespace OsEngine.Robots
         /// </summary>
         private BotTabSimple _tab;
 
+        //indicators индикаторы
+        private Aindicator _dsr;
+
         #region конструктор
 
         public Scalper(string name, StartProgram startProgram) : base(name, startProgram)
@@ -79,7 +87,7 @@ namespace OsEngine.Robots
             TabCreate(BotTabType.Simple);
             _tab = TabsSimple[0];
             _tab.CandleFinishedEvent += _tab_CandleFinishedEvent;
-
+            ParametrsChangeByUser += Scalper_ParametrsChangeByUser; // изменились параметры событие
             phaseGrowth = false; // значение при создании
 
             IsOn = CreateParameter("Включить", false);
@@ -87,6 +95,19 @@ namespace OsEngine.Robots
             candleBack = CreateParameter("Зона роста сколько свечей", 10, 5, 20, 1);
             growthPercent = CreateParameter("Процент роста бумаги", 3m, 2, 10, 1);
             TrailStopLength = CreateParameter("Процент Трейлинг стопа", 1.5m, 2, 10, 1);
+
+            /*Longterm = CreateParameter("Longterm Length", 9, 4, 100, 2);
+            DSR1 = CreateParameter("DSR1 Length", 7, 1, 4, 1);
+            DSR2 = CreateParameter("DSR1 Length", 1, 1, 4, 1);*/
+
+            _dsr = IndicatorsFactory.CreateIndicatorByName("DSR", name + "DSR", false);
+            _dsr = (Aindicator)_tab.CreateCandleIndicator(_dsr, "Prime");
+
+            /*_dsr.ParametersDigit[0].Value = Longterm.ValueInt;
+            _dsr.ParametersDigit[1].Value = DSR1.ValueInt;
+            _dsr.ParametersDigit[2].Value = DSR1.ValueInt;*/
+
+            _dsr.Save();
         }
 
         #endregion конструктор
@@ -256,8 +277,11 @@ namespace OsEngine.Robots
         #region сервис
 
         /// <summary>
-        /// проверить условия на вход в позицию
+        /// пользователь изменил настройки параметров
         /// </summary>
+        private void Scalper_ParametrsChangeByUser()
+        {
+        }
 
         /// <summary>
         /// вернуть название робота
