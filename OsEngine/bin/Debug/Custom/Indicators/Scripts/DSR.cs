@@ -25,7 +25,7 @@ namespace CustomIndicators.Scripts
                 _lengthDSR1 = CreateParameterInt("DSR1 length", 7);
                 _lengthDSR2 = CreateParameterInt("DSR2 length", 1);
 
-                _seriesTrend = CreateSeries("TrendDirection", Color.Yellow, IndicatorChartPaintType.Point, true);
+                _seriesTrend = CreateSeries("TrendDirection", Color.Yellow, IndicatorChartPaintType.Point, false);
 
                 _longTermEMA = IndicatorsFactory.CreateIndicatorByName("Ema", Name + "EmaLongterm", false);
                 ((IndicatorParameterInt)_longTermEMA.Parameters[0]).Bind(_lengthLongterm);
@@ -47,6 +47,10 @@ namespace CustomIndicators.Scripts
             decimal DSR1 = _dsr1EMA.DataSeries[0].Values[index];
             decimal DSR2 = _dsr2EMA.DataSeries[0].Values[index];
 
+            if (_lengthLongterm.ValueInt > index)
+            {
+                return;
+            }
             if (Longterm > DSR1 && DSR1 > DSR2)
             {
                 //bearTrend = ema200 > ema50 and ema50 > ema20
