@@ -95,17 +95,18 @@ namespace OsEngine.Robots
             candleBack = CreateParameter("Зона роста сколько свечей", 10, 5, 20, 1);
             growthPercent = CreateParameter("Процент роста бумаги", 3m, 2, 10, 1);
             TrailStopLength = CreateParameter("Процент Трейлинг стопа", 1.5m, 2, 10, 1);
-
-            /*Longterm = CreateParameter("Longterm Length", 9, 4, 100, 2);
+            // настройки индюка
+            Longterm = CreateParameter("Longterm Length", 9, 4, 100, 2);
             DSR1 = CreateParameter("DSR1 Length", 7, 1, 4, 1);
-            DSR2 = CreateParameter("DSR1 Length", 1, 1, 4, 1);*/
+            DSR2 = CreateParameter("DSR2 Length", 1, 1, 4, 1);
 
             _dsr = IndicatorsFactory.CreateIndicatorByName("DSR", name + "DSR", false);
-            _dsr = (Aindicator)_tab.CreateCandleIndicator(_dsr, "Prime");
 
-            /*_dsr.ParametersDigit[0].Value = Longterm.ValueInt;
+            _dsr.ParametersDigit[0].Value = Longterm.ValueInt;
             _dsr.ParametersDigit[1].Value = DSR1.ValueInt;
-            _dsr.ParametersDigit[2].Value = DSR1.ValueInt;*/
+            _dsr.ParametersDigit[2].Value = DSR2.ValueInt;
+
+            _dsr = (Aindicator)_tab.CreateCandleIndicator(_dsr, "Prime");
 
             _dsr.Save();
         }
@@ -117,6 +118,11 @@ namespace OsEngine.Robots
         /// </summary>
         private void _tab_CandleFinishedEvent(List<Candle> candles)
         {
+            decimal _trendDSR = _dsr.DataSeries[0].Last; //  значение индикатора DSR
+            if (_trendDSR == 1)
+            {
+            }
+
             if (IsOn.ValueBool == false) // если робот выключен
             {
                 return;
@@ -281,6 +287,21 @@ namespace OsEngine.Robots
         /// </summary>
         private void Scalper_ParametrsChangeByUser()
         {
+            if (_dsr.ParametersDigit[0].Value != Longterm.ValueInt)
+            {
+                _dsr.ParametersDigit[0].Value = Longterm.ValueInt;
+                _dsr.Reload();
+            }
+            if (_dsr.ParametersDigit[1].Value != DSR1.ValueInt)
+            {
+                _dsr.ParametersDigit[1].Value = DSR1.ValueInt;
+                _dsr.Reload();
+            }
+            if (_dsr.ParametersDigit[2].Value != DSR2.ValueInt)
+            {
+                _dsr.ParametersDigit[2].Value = DSR2.ValueInt;
+                _dsr.Reload();
+            }
         }
 
         /// <summary>
