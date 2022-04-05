@@ -22,12 +22,17 @@ namespace OsEngine.Robots
         /// <summary>
         /// вкл/выкл по хвостам
         /// </summary>
-        public bool Tail;
+        public bool _tail;
 
         /// <summary>
-        /// цена начала фазы роста
+        /// расчет фазы роста вкл/выкл
         /// </summary>
-        public decimal priceGrowthPhase;
+        public bool _calculationGP;
+
+        /// <summary>
+        /// минимальная цена начала фазы роста
+        /// </summary>
+        public decimal minPriceGrowthPhase;
 
         /// <summary>
         /// значение фазы роста
@@ -58,14 +63,17 @@ namespace OsEngine.Robots
         /// </summary>
         private StrategyParameterDecimal growthPercent;
 
-        private StrategyParameterInt Longterm;
-        private StrategyParameterInt DSR1;
-        private StrategyParameterInt DSR2;
-
         /// <summary>
         /// расстояние до трейдинг стопа в процентах
         /// </summary>
         private StrategyParameterDecimal TrailStopLength;
+
+        //индикатор
+        private Aindicator _dsr;
+
+        private StrategyParameterInt Longterm; // длина длинной ema
+        private StrategyParameterInt DSR1; //  длина средней ema
+        private StrategyParameterInt DSR2; //  длина короткой ema
 
         #endregion настройки на параметрах
 
@@ -74,15 +82,13 @@ namespace OsEngine.Robots
         /// </summary>
         private BotTabSimple _tab;
 
-        //indicators индикаторы
-        private Aindicator _dsr;
-
         #region конструктор
 
         public Scalper(string name, StartProgram startProgram) : base(name, startProgram)
         {
-            // для теста
-            Tail = false;
+            // для теста хвосты и расчет фазы
+            _tail = true;
+            _calculationGP = true;
 
             TabCreate(BotTabType.Simple);
             _tab = TabsSimple[0];
@@ -94,18 +100,16 @@ namespace OsEngine.Robots
             volume = CreateParameter("рабочий объём", 1, 1, 1, 1); // тестовые значения
             candleBack = CreateParameter("Зона роста сколько свечей", 10, 5, 20, 1);
             growthPercent = CreateParameter("Процент роста бумаги", 3m, 2, 10, 1);
-            TrailStopLength = CreateParameter("Процент Трейлинг стопа", 1.5m, 2, 10, 1);
+            TrailStopLength = CreateParameter("Процент Трейлинг стопа", 3m, 2, 10, 1);
             // настройки индюка
             Longterm = CreateParameter("Longterm Length", 9, 4, 100, 2);
             DSR1 = CreateParameter("DSR1 Length", 7, 1, 4, 1);
             DSR2 = CreateParameter("DSR2 Length", 1, 1, 4, 1);
 
             _dsr = IndicatorsFactory.CreateIndicatorByName("DSR", name + "DSR", false);
-
             _dsr.ParametersDigit[0].Value = Longterm.ValueInt;
             _dsr.ParametersDigit[1].Value = DSR1.ValueInt;
             _dsr.ParametersDigit[2].Value = DSR2.ValueInt;
-
             _dsr = (Aindicator)_tab.CreateCandleIndicator(_dsr, "Prime");
 
             _dsr.Save();
@@ -158,24 +162,28 @@ namespace OsEngine.Robots
             {
                 return;
             }
+            if (_calculationGP == false)
+            {
+                return;
+            }
             decimal maxBodyClose = candles[candles.Count - 1].Close; //максимальное значение закрытия последней свечи периода
             decimal minBodyOpen = candles[candles.Count - 1 - canBack].Open; //минимальное значение открытия первой свечи периода
             decimal highPriceOutPeriod = candles[candles.Count - 1].High; // цена хая последней свечи периода
             decimal lowPriceInPerod = candles[candles.Count - 1 - canBack].Low; // цена  лоя начальной свечи периода
 
-            if (Tail == false) //если галочка по хвостам ложь считаем по телам
+            if (_tail == false) //если галочка по хвостам ложь считаем по телам
             {
                 decimal rost = maxBodyClose - minBodyOpen;
                 decimal rostPers = rost / minBodyOpen * 100;
                 if (rostPers >= growthPercent.ValueDecimal)
                 {
                     /*  ставим в phaseGrowth значение тру
-                      записываем значение цены в PriceGrowthPhase */
+                      записываем значение цены в minPriceGrowthPhase */
                     phaseGrowth = true;
                 }
                 else phaseGrowth = false;
             }
-            if (Tail == true) // расчет по свечам с хвостами
+            if (_tail == true) // расчет по свечам с хвостами
             {
                 decimal rost = highPriceOutPeriod - lowPriceInPerod;
                 decimal rostPers = rost / lowPriceInPerod * 100;
@@ -201,7 +209,7 @@ namespace OsEngine.Robots
             decimal maxCandlesHigh = 0;  //  максимальное значение хая свечи
             decimal minCandelesLow = decimal.MaxValue; //минимальный лой
 
-            if (Tail == false) //если галочка по хвостам ложь считаем по телам
+            if (_tail == false) //если галочка по хвостам ложь считаем по телам
             {
                 for (int i = candles.Count - 1; i > 0 && i > candles.Count - 1 - canBack; i--)
                 { // вычисляем значения открытия и закрытия свечей
@@ -227,7 +235,7 @@ namespace OsEngine.Robots
                     else phaseGrowth = false;
                 }
             }
-            if (Tail == true) // расчет по свечам с хвостами
+            if (_tail == true) // расчет по свечам с хвостами
             {
                 for (int i = candles.Count - 1; i > 0 && i > candles.Count - 1 - canBack; i--)
                 {   // вычисляем значения High и Low

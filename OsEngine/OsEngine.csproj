@@ -167,6 +167,53 @@
     <Compile Include="Alerts\AlertToPriceCreateUi.xaml.cs">
       <DependentUpon>AlertToPriceCreateUi.xaml</DependentUpon>
     </Compile>
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\AccumulationDistribution.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\ADX\ADX.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\Alligator.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\AO.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\ATR.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\BearsPower.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\Bollinger.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\BullsPower.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\CCI.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\ChaikinOsc.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\CMO.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\DSR.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\EaseOfMovement.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\EfficiencyRatio.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\Ema.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\Envelops.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\FBD.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\ForceIndex.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\Fractal.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\Ichimoku.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\IvashovRange.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\KalmanFilter.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\LinearRegressionChannel.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\LinearRegressionLine.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\MACD.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\MacdLine.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\MFI.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\Momentum.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\OBV.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\ParabolicSAR.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\PivotFloor.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\PriceChannel.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\ROC.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\RSI.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\RVI.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\Sma.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\Ssma.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\StdDev.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\Stochastic.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\StochasticMomentumIndex.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\Trix.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\UltimateOscilator.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\VHFilter.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\VolumeOscilator.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\VWMA.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\WilliamsRange.cs" />
+    <Compile Include="bin\Debug\Custom\Indicators\Scripts\ZigZag.cs" />
     <Compile Include="Charts\CandleChart\Elements\IChartElement.cs" />
     <Compile Include="Charts\CandleChart\Elements\PointElement.cs" />
     <Compile Include="Charts\CandleChart\IChartPainter.cs" />
@@ -1641,6 +1688,7 @@
     <EmbeddedResource Include="Resources\OsEngine_logo_transpared.png" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="bin\Debug\Custom\Indicators\Scripts\ADX\Dlls\readme.txt" />
     <Content Include="lua\clibs\lua51.dll" />
     <Content Include="lua\clibs\socket\core.dll" />
   </ItemGroup>
