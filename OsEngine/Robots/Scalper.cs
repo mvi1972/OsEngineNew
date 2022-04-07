@@ -7,6 +7,7 @@ using OsEngine.Market;
 using OsEngine.OsTrader.Panels;
 using OsEngine.OsTrader.Panels.Tab;
 using OsEngine.Indicators;
+using System.Diagnostics;
 
 namespace OsEngine.Robots
 {
@@ -18,6 +19,11 @@ namespace OsEngine.Robots
         /// вкл/выкл для бумаги
         /// </summary>
         public bool IsOnPapir;
+
+        /// <summary>
+        /// рыночная цена бумаги
+        /// </summary>
+        public decimal marketPrice;
 
         /// <summary>
         /// вкл/выкл по хвостам
@@ -64,6 +70,11 @@ namespace OsEngine.Robots
         private StrategyParameterDecimal growthPercent;
 
         /// <summary>
+        /// процентная величина от минимума зоны роста
+        /// </summary>
+        private StrategyParameterDecimal riseFromLow;
+
+        /// <summary>
         /// расстояние до трейдинг стопа в процентах
         /// </summary>
         private StrategyParameterDecimal TrailStopLength;
@@ -90,16 +101,24 @@ namespace OsEngine.Robots
             _tail = true;
             _calculationGP = true;
 
+            // базовые инициализации
+            phaseGrowth = false;
+            minPriceGrowthPhase = 0;
+
             TabCreate(BotTabType.Simple);
             _tab = TabsSimple[0];
-            _tab.CandleFinishedEvent += _tab_CandleFinishedEvent;
-            ParametrsChangeByUser += Scalper_ParametrsChangeByUser; // изменились параметры событие
-            phaseGrowth = false; // значение при создании
+            // события
+            _tab.CandleFinishedEvent += MainInterLogic; // привязываем логику
+            ParametrsChangeByUser += _ParametrsChangeUserы; // событие пользователь изменил параметры
+            _tab.NewTickEvent += NewTickEvent; // новые тики
+            _tab.PositionClosingSuccesEvent += PositionClosingEvent; // обнуление переменных при закрытии поз
 
+            // настройки
             IsOn = CreateParameter("Включить", false);
             volume = CreateParameter("рабочий объём", 1, 1, 1, 1); // тестовые значения
             candleBack = CreateParameter("Зона роста сколько свечей", 10, 5, 20, 1);
             growthPercent = CreateParameter("Процент роста бумаги", 3m, 2, 10, 1);
+            riseFromLow = CreateParameter("Процент до минимума", 1m, 1, 10, 1);
             TrailStopLength = CreateParameter("Процент Трейлинг стопа", 3m, 2, 10, 1);
             // настройки индюка
             Longterm = CreateParameter("Longterm Length", 9, 4, 100, 2);
@@ -115,42 +134,70 @@ namespace OsEngine.Robots
             _dsr.Save();
         }
 
+        /// <summary>
+        /// закрылась позиция обнуляю переменные тут
+        /// </summary>
+        private void PositionClosingEvent(Position position)
+        {
+            minPriceGrowthPhase = 0;
+            _calculationGP = true; //  разрешаем считать заново
+        }
+
         #endregion конструктор
+
+        #region Логика
 
         /// <summary>
         /// событие завершения новой свечи главный вход в логику
         /// </summary>
-        private void _tab_CandleFinishedEvent(List<Candle> candles)
+        private void MainInterLogic(List<Candle> candles)
         {
-            decimal _trendDSR = _dsr.DataSeries[0].Last; //  значение индикатора DSR
-            if (_trendDSR == 1)
+            List<Position> positions = _tab.PositionsOpenAll;
+            if (positions.Count != 0)
             {
+                TrelingProfit();
             }
-
             if (IsOn.ValueBool == false) // если робот выключен
             {
                 return;
             }
-            List<Position> positions = _tab.PositionsOpenAll;
+            IndicatorDSR(); // проверка состояния индикатора DSR
+
             if (positions.Count == 0) // логика входа
             {
-                СalculationPhaseGrowthExtremeCandels(candles);
-                if (phaseGrowth == false)
+                СalculationPhaseGrowthExtremeCandels(candles); // расчет фазы роста
+
+                if (phaseGrowth == false)  // если фаза роста
                 {
                     return;
                 }
-                // проверка индикатора
-
-                decimal lastPrice = _tab.PriceBestAsk;
-                _tab.BuyAtMarket(volume.ValueInt); // тестовый вход
-            }
-            else // логика выхода
-            {
-                TrelingStop();
+                decimal indent = minPriceGrowthPhase * riseFromLow.ValueDecimal / 100;
+                if (marketPrice > minPriceGrowthPhase + indent && minPriceGrowthPhase != 0)
+                {
+                    _tab.BuyAtMarket(volume.ValueInt); // тестовый вход
+                }
             }
         }
 
-        #region Логика
+        /// <summary>
+        /// событие новый тик(трейды)
+        /// </summary>
+        private void NewTickEvent(Trade trade)
+        {
+            marketPrice = trade.Price;
+            if (phaseGrowth == true)
+            {
+                if (marketPrice < minPriceGrowthPhase)
+                {
+                    GetMinPriceGP();
+                }
+            }
+        }
+
+        private void GetMinPriceGP()
+        {
+            minPriceGrowthPhase = marketPrice;
+        }
 
         /// <summary>
         /// расчет фазы роста по цене крайних свечей
@@ -180,6 +227,10 @@ namespace OsEngine.Robots
                     /*  ставим в phaseGrowth значение тру
                       записываем значение цены в minPriceGrowthPhase */
                     phaseGrowth = true;
+                    string str = "Значение фазы роста = " + phaseGrowth.ToString() + "\n";
+                    Debug.WriteLine(str);
+                    minPriceGrowthPhase = marketPrice;
+                    _calculationGP = false;
                 }
                 else phaseGrowth = false;
             }
@@ -192,6 +243,10 @@ namespace OsEngine.Robots
                     /*  ставим в phaseGrowth значение тру
                       записываем значение цены в PriceGrowthPhase */
                     phaseGrowth = true;
+                    string str = "Значение фазы роста = " + phaseGrowth.ToString() + "\n";
+                    Debug.WriteLine(str);
+                    minPriceGrowthPhase = marketPrice;
+                    _calculationGP = false;
                 }
                 else phaseGrowth = false;
             }
@@ -264,13 +319,22 @@ namespace OsEngine.Robots
         }
 
         /// <summary>
-        /// проверить условия на вход в позицию
+        ///отключение фазы роста согласно значению DSR
         /// </summary>
-        private void TryOpenPosition(List<Candle> candles)
+        private void IndicatorDSR()
         {
+            decimal _trendDSR = _dsr.DataSeries[0].Last; //  значение индикатора DSR
+            if (_trendDSR == 0) // если 0 фаза роста закончилась
+            {
+                phaseGrowth = false; //выключаем
+                _calculationGP = true; //  разрешаем считать заново
+            }
         }
 
-        private void TrelingStop() // трейлинг стоп для тестов
+        /// <summary>
+        ///  трейлинг профит
+        /// </summary>
+        private void TrelingProfit()
         {
             List<Position> position = _tab.PositionsOpenAll;
             if (position.Count == 0)
@@ -293,7 +357,7 @@ namespace OsEngine.Robots
         /// <summary>
         /// пользователь изменил настройки параметров
         /// </summary>
-        private void Scalper_ParametrsChangeByUser()
+        private void _ParametrsChangeUserы()
         {
             if (_dsr.ParametersDigit[0].Value != Longterm.ValueInt)
             {

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using OsEngine.Entity;
 using OsEngine.Indicators;

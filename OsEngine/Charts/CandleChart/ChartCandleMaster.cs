@@ -95,6 +95,10 @@ namespace OsEngine.Charts.CandleChart
                             CreateIndicator(ind, indicator[2]);
                             continue;
                         }
+                        if (indicator[0] == "DSR")
+                        {
+                            CreateIndicator(new TickVolume(indicator[1], Convert.ToBoolean(indicator[3])), indicator[2]);
+                        }
 
                         if (indicator[0] == "TickVolume")
                         {

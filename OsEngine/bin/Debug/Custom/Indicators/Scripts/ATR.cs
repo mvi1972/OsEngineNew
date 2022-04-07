@@ -8,6 +8,11 @@ namespace CustomIndicators.Scripts
 {
     class ATR : Aindicator
     {
+        public ATR()
+        {
+
+        }
+
 
         private IndicatorParameterInt _lenght;
 

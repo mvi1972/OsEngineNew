@@ -5,9 +5,9 @@
 
 using System.Collections.Generic;
 using OsEngine.Entity;
-using OsEngine.OsTrader.Panels;
 using OsEngine.OsTrader.Panels.Tab;
 using OsEngine.Indicators;
+using OsEngine.OsTrader.Panels;
 
 namespace OsEngine.Robots.Screeners
 {
@@ -81,7 +81,9 @@ namespace OsEngine.Robots.Screeners
             {
                 NewCandleEvent(candles, newTab);
             };
+
         }
+
 
         /// <summary>
         /// событие завершения свечи
