@@ -71,6 +71,7 @@ namespace OsEngine.Robots
 
         private StrategyParameterBool TestIsOnStopLoss; // для тестов включение
         private StrategyParameterBool TestIsOnProfit; // для тестов включение
+        private StrategyParameterBool TestIsOnTrelingProfit; // для тестов включение
 
         /// <summary>
         /// расстояние до стоп лосса 1
@@ -101,6 +102,11 @@ namespace OsEngine.Robots
         /// расстояние до трейлинг профита в процентах
         /// </summary>
         private StrategyParameterDecimal TrailProfitLength;
+
+        /// <summary>
+        /// расстояние до профита в процентах
+        /// </summary>
+        private StrategyParameterDecimal ProfitLength;
 
         //индикатор
         private Aindicator _dsr;
@@ -144,11 +150,13 @@ namespace OsEngine.Robots
             candleBack = CreateParameter("Зона роста сколько свечей", 10, 5, 20, 1, "Вход");
             growthPercent = CreateParameter("Процент зоны роста бумаги", 3m, 2, 10, 1, "Вход");
             riseFromLow = CreateParameter("От зоны роста входим через", 1m, 1, 10, 1, "Вход");
+            ProfitLength = CreateParameter("Процент до профита ", 3m, 1, 10, 1, "Выход");
             TrailStopLossLength = CreateParameter("Процент Трейлинг стопа", 3m, 2, 10, 1, "Выход");
             TrailProfitLength = CreateParameter("Процент Трейлинг профита ", 1m, 1, 10, 1, "Выход");
             stopLoss1 = CreateParameter("Процент Cтоп лосс ", 3m, 2, 10, 1, "Выход");
             // для теста
             TestIsOnStopLoss = CreateParameter("Включить трейлинг стоп лосс", false, "типа галочки");
+            TestIsOnTrelingProfit = CreateParameter("Включить Трейлинг Профит", false, "типа галочки");
             TestIsOnProfit = CreateParameter("Включить Тейк Профит", false, "типа галочки");
 
             // настройки индюка
@@ -186,7 +194,7 @@ namespace OsEngine.Robots
             List<Position> positions = _tab.PositionsOpenAll;
             if (positions.Count != 0)
             {
-                TrelingStopLoss();
+                TrelingStopLossAndProfit();
                 Profit();
             }
             if (IsOn.ValueBool == false) // если робот выключен
@@ -418,22 +426,31 @@ namespace OsEngine.Robots
         }
 
         /// <summary>
-        ///  трейлинг стоп лосс
+        ///  трейлинг стоп лосс и профит
         /// </summary>
-        private void TrelingStopLoss()
+        private void TrelingStopLossAndProfit()
         {
             List<Position> position = _tab.PositionsOpenAll;
-
+            if (position.Count == 0)
+            {
+                return;
+            }
             if (TestIsOnStopLoss.ValueBool == true)
             {
-                if (position.Count == 0)
+                decimal lastPrice = _tab.PriceBestAsk;
+                decimal trailActiv = lastPrice - lastPrice * TrailStopLossLength.ValueDecimal / 100;
+                decimal trailOrder = trailActiv - 5 * _tab.Securiti.PriceStep;
+                _tab.CloseAtTrailingStop(position[0], trailActiv, trailOrder);
+                //return;// если включены одновременно и трейлигн стоп и трейлинг профит работает только первый
+            }
+            if (TestIsOnTrelingProfit.ValueBool == true)
+            {
+                decimal OpenPrice = _tab.PositionsLast.EntryPrice;
+                decimal priceProfit = OpenPrice + OpenPrice * ProfitLength.ValueDecimal / 100;
+
+                if (OpenPrice != 0 && marketPrice > priceProfit)
                 {
-                    return;
-                }
-                else
-                {
-                    decimal lastPrice = _tab.PriceBestAsk;
-                    decimal trailActiv = lastPrice - lastPrice * TrailStopLossLength.ValueDecimal / 100;
+                    decimal trailActiv = marketPrice - OpenPrice * TrailProfitLength.ValueDecimal / 100;
                     decimal trailOrder = trailActiv - 5 * _tab.Securiti.PriceStep;
                     _tab.CloseAtTrailingStop(position[0], trailActiv, trailOrder);
                 }
@@ -457,7 +474,7 @@ namespace OsEngine.Robots
                 {
                     decimal lastPrice = _tab.PriceBestAsk;
                     decimal openPos = _tab.PositionsLast.EntryPrice;  // цена открытия позиции
-                    decimal profit = openPos + lastPrice * TrailProfitLength.ValueDecimal / 100;
+                    decimal profit = openPos + lastPrice * ProfitLength.ValueDecimal / 100;
                     if (openPos != 0)
                     {
                         _tab.CloseAtProfit(position[0], profit, profit);
