@@ -26,6 +26,11 @@ namespace OsEngine.Robots
         public decimal marketPrice;
 
         /// <summary>
+        /// время последнего трейда
+        /// </summary>
+        public DateTime real_time;
+
+        /// <summary>
         /// вкл/выкл трейлинг стоп лосс
         /// </summary>
         public bool isOnTrelingStopLoss;
@@ -77,6 +82,16 @@ namespace OsEngine.Robots
         /// расстояние до стоп лосса 1
         /// </summary>
         private StrategyParameterDecimal stopLoss1;
+
+        /// <summary>
+        /// расстояние до стоп лосса 2
+        /// </summary>
+        private StrategyParameterDecimal stopLoss2;
+
+        /// <summary>
+        /// количество минут на стоп 2
+        /// </summary>
+        private StrategyParameterInt minutBackStopLoss2;
 
         /// <summary>
         /// количество свечей зоны роста
@@ -154,6 +169,8 @@ namespace OsEngine.Robots
             TrailStopLossLength = CreateParameter("Процент Трейлинг стопа", 3m, 2, 10, 1, "Выход");
             TrailProfitLength = CreateParameter("Процент Трейлинг профита ", 1m, 1, 10, 1, "Выход");
             stopLoss1 = CreateParameter("Процент Cтоп лосс ", 3m, 2, 10, 1, "Выход");
+            stopLoss2 = CreateParameter("Процент Cтоп лосс 2 ", 5m, 2, 10, 1, "Выход");
+            minutBackStopLoss2 = CreateParameter("Минут назад для стоп 2", 40, 10, 10, 600, "Выход");
             // для теста
             TestIsOnStopLoss = CreateParameter("Включить трейлинг стоп лосс", false, "типа галочки");
             TestIsOnTrelingProfit = CreateParameter("Включить Трейлинг Профит", false, "типа галочки");
@@ -224,7 +241,7 @@ namespace OsEngine.Robots
         /// </summary>
         private void PositionOpeningEvent(Position position)
         {
-            StopLoss1(position);
+            StopLoss(position);
         }
 
         /// <summary>
@@ -233,31 +250,58 @@ namespace OsEngine.Robots
         private void NewTickEvent(Trade trade)
         {
             marketPrice = trade.Price;
+            real_time = trade.Time;
 
             GetMinPriceGP();
         }
 
         /// <summary>
-        /// расчет временного стоп лосса 2 уровня
-        /// </summary>
-        private void StopLoss2Temp()
-        { // 2. Если  в течении 40 минут [2 Профита] было закрыто 2 прибыльных сделки,
-          // то в следующих сделках "Стоп-лосс" устанавливается на 5% [Стоп-лосс2].
-          // 3. После выключения "Фазы роста", когда будет следующая "Фаза роста",
-          // "Стоп-лосс" снова будет ставиться на 3% [Стоп-лосс1].
-        }
-
-        /// <summary>
         /// выставляет стоп лосс
         /// </summary>
-        private void StopLoss1(Position position)  // выставляем стоп по отступу в обход вызова из метода окончания свечи
+        private void StopLoss(Position position)  // выставляем стоп по отступу в обход вызова из метода окончания свечи
         {
-            //_tab.BuyAtStopCancel();
-            //_tab.SellAtStopCancel();
-
             decimal indent = stopLoss1.ValueDecimal * marketPrice / 100;  // отступ для стопа
             decimal priceOpenPos = _tab.PositionsLast.EntryPrice;  // цена открытия позиции
             decimal priceStopLoss1 = priceOpenPos - indent;
+
+            List<Position> positionClose = _tab.PositionsCloseAll;
+            if (positionClose.Count > 2)
+            {
+                // 2. Если  в течении 40 минут [2 Профита] было закрыто 2 прибыльных сделки,
+                // то в следующих сделках "Стоп-лосс" устанавливается на 5% [Стоп-лосс2].
+                // дальше не стал реализовывать т.к. практически невыполнимое условие // 3. После выключения "Фазы роста", когда будет следующая "Фаза роста", // "Стоп-лосс" снова будет ставиться на 3% [Стоп-лосс1].
+
+                decimal profitLast = positionClose[positionClose.Count - 1].ProfitPortfolioPunkt;// профит последней следки
+                decimal profitLast2 = positionClose[positionClose.Count - 2].ProfitOperationPunkt;// профит предпоследней сделки
+                DateTime timeBackTrade = positionClose[positionClose.Count - 2].TimeClose; // время закрытия предп позы
+                DateTime timePeriodBack = timeBackTrade.AddMinutes(minutBackStopLoss2.ValueInt); // время учтенного периода
+                if (profitLast > 0 && profitLast2 > 0 && real_time < timePeriodBack)
+                {
+                    indent = stopLoss2.ValueDecimal * marketPrice / 100;  // отступ для стопа
+                    priceOpenPos = _tab.PositionsLast.EntryPrice;  // цена открытия позиции
+                    decimal priceStopLoss2 = priceOpenPos - indent;
+
+                    if (position.StopOrderPrice == 0 ||
+                        position.StopOrderPrice < priceStopLoss2)
+                    {
+                        //_tab.CloseAtMarket(position, position.OpenVolume);
+                        _tab.CloseAtStop(position, priceStopLoss2, priceStopLoss2 - _tab.Securiti.PriceStep);
+                    }
+
+                    if (position.StopOrderIsActiv == false)
+                    {
+                        if (position.StopOrderRedLine - _tab.Securiti.PriceStep * 10 > _tab.PriceBestAsk)
+                        {
+                            _tab.CloseAtMarket(position, position.OpenVolume);
+                            //_tab.CloseAtLimit(position, _tab.PriceBestAsk, position.OpenVolume);
+                            return;
+                        }
+                        position.StopOrderIsActiv = true;
+                    }
+                }
+            }
+            //_tab.BuyAtStopCancel();
+            //_tab.SellAtStopCancel();
 
             if (position.StopOrderPrice == 0 ||
                 position.StopOrderPrice < priceStopLoss1)
@@ -441,10 +485,15 @@ namespace OsEngine.Robots
                 decimal trailActiv = lastPrice - lastPrice * TrailStopLossLength.ValueDecimal / 100;
                 decimal trailOrder = trailActiv - 5 * _tab.Securiti.PriceStep;
                 _tab.CloseAtTrailingStop(position[0], trailActiv, trailOrder);
-                //return;// если включены одновременно и трейлигн стоп и трейлинг профит работает только первый
+                //return; для того если включены одновременно и трейлигн стоп и трейлинг профит работает только первый
             }
             if (TestIsOnTrelingProfit.ValueBool == true)
             {
+                // Трейлинг профит
+                // При росте цены минимум на 3 % [Тейк профит] от точки входа,
+                // а затем снижении на 1 % [Трейлинг профит] от "образовавшегося максимума",
+                // позиция закрывается рыночным ордером.
+
                 decimal OpenPrice = _tab.PositionsLast.EntryPrice;
                 decimal priceProfit = OpenPrice + OpenPrice * ProfitLength.ValueDecimal / 100;
 
