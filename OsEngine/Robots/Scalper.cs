@@ -166,20 +166,20 @@ namespace OsEngine.Robots
             growthPercent = CreateParameter("Процент зоны роста бумаги", 3m, 2, 10, 1, "Вход");
             riseFromLow = CreateParameter("От зоны роста входим через", 1m, 1, 10, 1, "Вход");
             ProfitLength = CreateParameter("Процент до профита ", 3m, 1, 10, 1, "Выход");
-            TrailStopLossLength = CreateParameter("Процент Трейлинг стопа", 3m, 2, 10, 1, "Выход");
-            TrailProfitLength = CreateParameter("Процент Трейлинг профита ", 1m, 1, 10, 1, "Выход");
-            stopLoss1 = CreateParameter("Процент Cтоп лосс ", 3m, 2, 10, 1, "Выход");
-            stopLoss2 = CreateParameter("Процент Cтоп лосс 2 ", 5m, 2, 10, 1, "Выход");
+            TrailStopLossLength = CreateParameter("Процент Трейлинг стопа", 3m, 2, 10, 1, " Выход");
+            TrailProfitLength = CreateParameter("Процент Трейлинг профита ", 1m, 1, 10, 1, " Выход");
+            stopLoss1 = CreateParameter("Процент Cтоп лосс ", 3m, 2, 10, 1, " Выход");
+            stopLoss2 = CreateParameter("Процент Cтоп лосс 2 ", 5m, 2, 10, 1, " Выход");
             minutBackStopLoss2 = CreateParameter("Минут назад для стоп 2", 40, 10, 10, 600, "Выход");
             // для теста
-            TestIsOnStopLoss = CreateParameter("Включить трейлинг стоп лосс", false, "типа галочки");
-            TestIsOnTrelingProfit = CreateParameter("Включить Трейлинг Профит", false, "типа галочки");
-            TestIsOnProfit = CreateParameter("Включить Тейк Профит", false, "типа галочки");
+            TestIsOnStopLoss = CreateParameter("Включить трейлинг стоп лосс", false, " Галочки");
+            TestIsOnTrelingProfit = CreateParameter("Включить Трейлинг Профит", true, " Галочки");
+            TestIsOnProfit = CreateParameter("Включить Тейк Профит", false, " Галочки");
 
             // настройки индюка
-            Longterm = CreateParameter("Longterm Length", 9, 4, 100, 2, "индикатор");
-            DSR1 = CreateParameter("DSR1 Length", 7, 1, 4, 1, "индикатор");
-            DSR2 = CreateParameter("DSR2 Length", 1, 1, 4, 1, "индикатор");
+            Longterm = CreateParameter("Longterm Length", 9, 4, 100, 2, " индикатор");
+            DSR1 = CreateParameter("DSR1 Length", 7, 1, 4, 1, " индикатор");
+            DSR2 = CreateParameter("DSR2 Length", 1, 1, 4, 1, " индикатор");
 
             _dsr = IndicatorsFactory.CreateIndicatorByName("DSR", name + "DSR", false);
             _dsr.ParametersDigit[0].Value = Longterm.ValueInt;
