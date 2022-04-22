@@ -8,6 +8,7 @@ using OsEngine.OsTrader.Panels;
 using OsEngine.OsTrader.Panels.Tab;
 using OsEngine.Indicators;
 using System.Diagnostics;
+using System.Windows;
 
 namespace OsEngine.Robots
 {
@@ -137,6 +138,16 @@ namespace OsEngine.Robots
         /// </summary>
         private BotTabSimple _tab;
 
+        /// <summary>
+        /// вкладка скринера
+        /// </summary>
+        private BotTabScreener _tabScreen;
+
+        /// <summary>
+        /// список роботов в скринере
+        /// </summary>
+        public List<BotTabSimple> robots = new List<BotTabSimple>();
+
         #region конструктор
 
         public Scalper(string name, StartProgram startProgram) : base(name, startProgram)
@@ -150,14 +161,18 @@ namespace OsEngine.Robots
             phaseGrowth = false;
             minPriceGrowthPhase = 0;
 
-            TabCreate(BotTabType.Simple);
-            _tab = TabsSimple[0];
+            //TabCreate(BotTabType.Simple);
+            //_tab = TabsSimple[0];
+            TabCreate(BotTabType.Screener);
+            _tabScreen = TabsScreener[0];
+            _tabScreen.NewTabCreateEvent += _tabScreen_NewTabCreateEvent;
+
             // события
-            _tab.CandleFinishedEvent += MainInterLogic; // привязываем логику
+            //_tab.CandleFinishedEvent += MainInterLogic; // привязываем логику
             ParametrsChangeByUser += _ParametrsChangeUserы; // событие пользователь изменил параметры
-            _tab.NewTickEvent += NewTickEvent; // новые тики
-            _tab.PositionClosingSuccesEvent += PositionClosingEvent; // обнуление переменных при закрытии поз
-            _tab.PositionOpeningSuccesEvent += PositionOpeningEvent; // удачно открылась позиция
+            //_tab.NewTickEvent += NewTickEvent; // новые тики
+            //_tab.PositionClosingSuccesEvent += PositionClosingEvent; // обнуление переменных при закрытии поз
+            //_tab.PositionOpeningSuccesEvent += PositionOpeningEvent; // удачно открылась позиция
 
             // настройки
             IsOn = CreateParameter("Включить", false, "Вход");
@@ -165,18 +180,19 @@ namespace OsEngine.Robots
             candleBack = CreateParameter("Зона роста сколько свечей", 10, 5, 20, 1, "Вход");
             growthPercent = CreateParameter("Процент зоны роста бумаги", 3m, 2, 10, 1, "Вход");
             riseFromLow = CreateParameter("От зоны роста входим через", 1m, 1, 10, 1, "Вход");
-            ProfitLength = CreateParameter("Процент до профита ", 3m, 1, 10, 1, "Выход");
+            ProfitLength = CreateParameter("Процент до профита ", 3m, 1, 10, 1, " Выход");
             TrailStopLossLength = CreateParameter("Процент Трейлинг стопа", 3m, 2, 10, 1, " Выход");
             TrailProfitLength = CreateParameter("Процент Трейлинг профита ", 1m, 1, 10, 1, " Выход");
             stopLoss1 = CreateParameter("Процент Cтоп лосс ", 3m, 2, 10, 1, " Выход");
             stopLoss2 = CreateParameter("Процент Cтоп лосс 2 ", 5m, 2, 10, 1, " Выход");
-            minutBackStopLoss2 = CreateParameter("Минут назад для стоп 2", 40, 10, 10, 600, "Выход");
+            minutBackStopLoss2 = CreateParameter("Минут назад для стоп 2", 40, 10, 10, 600, " Выход");
             // для теста
             TestIsOnStopLoss = CreateParameter("Включить трейлинг стоп лосс", false, " Галочки");
             TestIsOnTrelingProfit = CreateParameter("Включить Трейлинг Профит", true, " Галочки");
             TestIsOnProfit = CreateParameter("Включить Тейк Профит", false, " Галочки");
 
             // настройки индюка
+            /*
             Longterm = CreateParameter("Longterm Length", 9, 4, 100, 2, " индикатор");
             DSR1 = CreateParameter("DSR1 Length", 7, 1, 4, 1, " индикатор");
             DSR2 = CreateParameter("DSR2 Length", 1, 1, 4, 1, " индикатор");
@@ -187,7 +203,33 @@ namespace OsEngine.Robots
             _dsr.ParametersDigit[2].Value = DSR2.ValueInt;
             _dsr = (Aindicator)_tab.CreateCandleIndicator(_dsr, "Prime");
 
-            _dsr.Save();
+            _dsr.Save();*/
+            _tabScreen.CreateCandleIndicator(1, "DSR", new List<string>() { "9", "7", "1" });
+        }
+
+        private void _tabScreen_NewTabCreateEvent(BotTabSimple newTab)
+        {
+            robots.Add(newTab);
+            newTab.PositionClosingSuccesEvent += (Position position) =>
+            {
+                PositionClosingEvent(position);
+            };
+
+            newTab.PositionOpeningSuccesEvent += (Position position) => PositionOpeningEvent(position, newTab);
+
+            newTab.PositionOpeningSuccesEvent += (Position position) => NewTab_PositionOpeningSuccesEvent(position, newTab);
+
+            newTab.NewTickEvent += (Trade trade) => NewTickEvent(trade);
+
+            newTab.CandleFinishedEvent += (List<Candle> candles) =>
+            {
+                MainInterLogic(candles, newTab);
+                IndicatorDSR(candles, newTab);
+            };
+        }
+
+        private void NewTab_PositionOpeningSuccesEvent(Position position, BotTabSimple _tab)
+        {
         }
 
         /// <summary>
@@ -206,19 +248,31 @@ namespace OsEngine.Robots
         /// <summary>
         /// событие завершения новой свечи главный вход в логику
         /// </summary>
-        private void MainInterLogic(List<Candle> candles)
+        private void MainInterLogic(List<Candle> candles, BotTabSimple _tab)
         {
             List<Position> positions = _tab.PositionsOpenAll;
             if (positions.Count != 0)
             {
-                TrelingStopLossAndProfit();
-                Profit();
+                TrelingStopLossAndProfit(_tab);
+                Profit(_tab);
             }
             if (IsOn.ValueBool == false) // если робот выключен
             {
                 return;
             }
-            IndicatorDSR(); // проверка состояния индикатора DSR
+            IndicatorDSR(candles, _tab); // проверка состояния индикатора DSR
+
+            // проверка состояния индикатора DSR
+            /*if (candles.Count > candleBack.ValueInt + 1)
+            {
+                Aindicator _dsr = (Aindicator)_tab.Indicators[0];
+                decimal _trendDSR = _dsr.DataSeries[0].Last; // последние значение индикатора DSR
+                if (_trendDSR == 0) // если 0 тренд вниз - фаза роста закончилась
+                {
+                    phaseGrowth = false; //выключаем
+                    _calculationGP = true; //  разрешаем считать заново
+                }
+            }*/
 
             if (positions.Count == 0) // логика входа
             {
@@ -239,9 +293,9 @@ namespace OsEngine.Robots
         /// <summary>
         /// входящее событие о том что открылась некая сделка ставим стоп
         /// </summary>
-        private void PositionOpeningEvent(Position position)
+        private void PositionOpeningEvent(Position position, BotTabSimple _tab)
         {
-            StopLoss(position);
+            StopLoss(position, _tab);
         }
 
         /// <summary>
@@ -258,7 +312,7 @@ namespace OsEngine.Robots
         /// <summary>
         /// выставляет стоп лосс
         /// </summary>
-        private void StopLoss(Position position)  // выставляем стоп по отступу в обход вызова из метода окончания свечи
+        private void StopLoss(Position position, BotTabSimple _tab)  // выставляем стоп по отступу в обход вызова из метода окончания свечи
         {
             decimal indent = stopLoss1.ValueDecimal * marketPrice / 100;  // отступ для стопа
             decimal priceOpenPos = _tab.PositionsLast.EntryPrice;  // цена открытия позиции
@@ -269,7 +323,7 @@ namespace OsEngine.Robots
             {
                 // 2. Если  в течении 40 минут [2 Профита] было закрыто 2 прибыльных сделки,
                 // то в следующих сделках "Стоп-лосс" устанавливается на 5% [Стоп-лосс2].
-                // дальше не стал реализовывать т.к. практически невыполнимое условие // 3. После выключения "Фазы роста", когда будет следующая "Фаза роста", // "Стоп-лосс" снова будет ставиться на 3% [Стоп-лосс1].
+                // дальше пока не стал реализовывать т.к. практически невыполнимое условие // 3. После выключения "Фазы роста", когда будет следующая "Фаза роста", // "Стоп-лосс" снова будет ставиться на 3% [Стоп-лосс1].
 
                 decimal profitLast = positionClose[positionClose.Count - 1].ProfitPortfolioPunkt;// профит последней следки
                 decimal profitLast2 = positionClose[positionClose.Count - 2].ProfitOperationPunkt;// профит предпоследней сделки
@@ -286,6 +340,7 @@ namespace OsEngine.Robots
                     {
                         //_tab.CloseAtMarket(position, position.OpenVolume);
                         _tab.CloseAtStop(position, priceStopLoss2, priceStopLoss2 - _tab.Securiti.PriceStep);
+                        //_tab.CloseAtMarket()
                     }
 
                     if (position.StopOrderIsActiv == false)
@@ -459,20 +514,24 @@ namespace OsEngine.Robots
         /// <summary>
         ///отключение фазы роста согласно значению DSR
         /// </summary>
-        private void IndicatorDSR()
+        private void IndicatorDSR(List<Candle> candles, BotTabSimple _tab)
         {
-            decimal _trendDSR = _dsr.DataSeries[0].Last; // последние значение индикатора DSR
-            if (_trendDSR == 0) // если 0 тренд вниз - фаза роста закончилась
+            if (candles.Count > candleBack.ValueInt + 1)
             {
-                phaseGrowth = false; //выключаем
-                _calculationGP = true; //  разрешаем считать заново
+                Aindicator _dsr = (Aindicator)_tab.Indicators[0];
+                decimal _trendDSR = _dsr.DataSeries[0].Last; // последние значение индикатора DSR
+                if (_trendDSR == 0) // если 0 тренд вниз - фаза роста закончилась
+                {
+                    phaseGrowth = false; //выключаем
+                    _calculationGP = true; //  разрешаем считать заново
+                }
             }
         }
 
         /// <summary>
         ///  трейлинг стоп лосс и профит
         /// </summary>
-        private void TrelingStopLossAndProfit()
+        private void TrelingStopLossAndProfit(BotTabSimple _tab)
         {
             List<Position> position = _tab.PositionsOpenAll;
             if (position.Count == 0)
@@ -509,7 +568,7 @@ namespace OsEngine.Robots
         /// <summary>
         ///  тэйк профит
         /// </summary>
-        private void Profit()
+        private void Profit(BotTabSimple _tab)
         {
             List<Position> position = _tab.PositionsOpenAll;
 
@@ -541,7 +600,7 @@ namespace OsEngine.Robots
         /// </summary>
         private void _ParametrsChangeUserы()
         {
-            if (_dsr.ParametersDigit[0].Value != Longterm.ValueInt)
+            /*if (_dsr.ParametersDigit[0].Value != Longterm.ValueInt)
             {
                 _dsr.ParametersDigit[0].Value = Longterm.ValueInt;
                 _dsr.Reload();
@@ -555,7 +614,7 @@ namespace OsEngine.Robots
             {
                 _dsr.ParametersDigit[2].Value = DSR2.ValueInt;
                 _dsr.Reload();
-            }
+            }*/
         }
 
         /// <summary>
@@ -571,6 +630,8 @@ namespace OsEngine.Robots
         /// </summary>
         public override void ShowIndividualSettingsDialog()
         {
+            Window window = new Window();
+            window.Show();
         }
 
         #endregion сервис
