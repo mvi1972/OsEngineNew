@@ -946,7 +946,10 @@
     <Compile Include="Robots\OnScriptIndicators\RviTrade.cs" />
     <Compile Include="Robots\OnScriptIndicators\SmaTrendSample.cs" />
     <Compile Include="Robots\OnScriptIndicators\TimeOfDayBot.cs" />
-    <Compile Include="Robots\Scalper.cs" />
+    <Compile Include="Robots\Screeners\Scalper.cs" />
+    <Compile Include="Robots\Screeners\ScalperSettings.xaml.cs">
+      <DependentUpon>ScalperSettings.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Robots\Screeners\SmaScreener.cs" />
     <Compile Include="Robots\Trend\EnvelopTrend.cs" />
     <Compile Include="Robots\Trend\MomentumMacd.cs" />
@@ -1450,6 +1453,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Robots\MarketMaker\PairTraderSimpleUi.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Robots\Screeners\ScalperSettings.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

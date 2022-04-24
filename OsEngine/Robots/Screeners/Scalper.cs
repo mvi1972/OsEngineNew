@@ -9,6 +9,7 @@ using OsEngine.OsTrader.Panels.Tab;
 using OsEngine.Indicators;
 using System.Diagnostics;
 using System.Windows;
+using OsEngine.Robots.Screeners;
 
 namespace OsEngine.Robots
 {
@@ -217,8 +218,6 @@ namespace OsEngine.Robots
 
             newTab.PositionOpeningSuccesEvent += (Position position) => PositionOpeningEvent(position, newTab);
 
-            newTab.PositionOpeningSuccesEvent += (Position position) => NewTab_PositionOpeningSuccesEvent(position, newTab);
-
             newTab.NewTickEvent += (Trade trade) => NewTickEvent(trade);
 
             newTab.CandleFinishedEvent += (List<Candle> candles) =>
@@ -226,10 +225,6 @@ namespace OsEngine.Robots
                 MainInterLogic(candles, newTab);
                 IndicatorDSR(candles, newTab);
             };
-        }
-
-        private void NewTab_PositionOpeningSuccesEvent(Position position, BotTabSimple _tab)
-        {
         }
 
         /// <summary>
@@ -630,8 +625,8 @@ namespace OsEngine.Robots
         /// </summary>
         public override void ShowIndividualSettingsDialog()
         {
-            Window window = new Window();
-            window.Show();
+            Window Uiss = new ScalperSettings();
+            Uiss.Show();
         }
 
         #endregion сервис
