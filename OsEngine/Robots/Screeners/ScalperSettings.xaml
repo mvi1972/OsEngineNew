@@ -4,7 +4,12 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OsEngine.Robots.Screeners"
+        xmlns:col="clr-namespace:System.Collections;assembly=mscorlib"
+
         mc:Ignorable="d"
-        Title="ScalperSettings" Height="450" Width="600">
-    <Grid />
+        Title="Настройки" Height="450" Width="600">
+    <Grid Background="Lavender">
+        <DataGrid x:Name="robots">
+        </DataGrid>
+    </Grid>
 </Window>

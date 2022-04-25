@@ -11,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using OsEngine.Robots.Screeners;
 
 namespace OsEngine.Robots.Screeners
 {
@@ -19,9 +20,11 @@ namespace OsEngine.Robots.Screeners
     /// </summary>
     public partial class ScalperSettings : Window
     {
-        public ScalperSettings()
+        public ScalperSettings(Scalper bot)
         {
             InitializeComponent();
+            DataContext = bot;
+            robots.ItemsSource = bot.robots;
         }
     }
 }

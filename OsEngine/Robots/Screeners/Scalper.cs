@@ -162,18 +162,12 @@ namespace OsEngine.Robots
             phaseGrowth = false;
             minPriceGrowthPhase = 0;
 
-            //TabCreate(BotTabType.Simple);
-            //_tab = TabsSimple[0];
             TabCreate(BotTabType.Screener);
             _tabScreen = TabsScreener[0];
             _tabScreen.NewTabCreateEvent += _tabScreen_NewTabCreateEvent;
 
             // события
-            //_tab.CandleFinishedEvent += MainInterLogic; // привязываем логику
-            ParametrsChangeByUser += _ParametrsChangeUserы; // событие пользователь изменил параметры
-            //_tab.NewTickEvent += NewTickEvent; // новые тики
-            //_tab.PositionClosingSuccesEvent += PositionClosingEvent; // обнуление переменных при закрытии поз
-            //_tab.PositionOpeningSuccesEvent += PositionOpeningEvent; // удачно открылась позиция
+            ParametrsChangeByUser += _ParametrsChangeUser; // событие пользователь изменил параметры
 
             // настройки
             IsOn = CreateParameter("Включить", false, "Вход");
@@ -193,19 +187,13 @@ namespace OsEngine.Robots
             TestIsOnProfit = CreateParameter("Включить Тейк Профит", false, " Галочки");
 
             // настройки индюка
-            /*
+            _tabScreen.CreateCandleIndicator(1, "DSR", new List<string>() { "9", "7", "1" });
+
             Longterm = CreateParameter("Longterm Length", 9, 4, 100, 2, " индикатор");
             DSR1 = CreateParameter("DSR1 Length", 7, 1, 4, 1, " индикатор");
             DSR2 = CreateParameter("DSR2 Length", 1, 1, 4, 1, " индикатор");
 
-            _dsr = IndicatorsFactory.CreateIndicatorByName("DSR", name + "DSR", false);
-            _dsr.ParametersDigit[0].Value = Longterm.ValueInt;
-            _dsr.ParametersDigit[1].Value = DSR1.ValueInt;
-            _dsr.ParametersDigit[2].Value = DSR2.ValueInt;
-            _dsr = (Aindicator)_tab.CreateCandleIndicator(_dsr, "Prime");
-
-            _dsr.Save();*/
-            _tabScreen.CreateCandleIndicator(1, "DSR", new List<string>() { "9", "7", "1" });
+            // см  метод изменения параметров
         }
 
         private void _tabScreen_NewTabCreateEvent(BotTabSimple newTab)
@@ -257,18 +245,6 @@ namespace OsEngine.Robots
             }
             IndicatorDSR(candles, _tab); // проверка состояния индикатора DSR
 
-            // проверка состояния индикатора DSR
-            /*if (candles.Count > candleBack.ValueInt + 1)
-            {
-                Aindicator _dsr = (Aindicator)_tab.Indicators[0];
-                decimal _trendDSR = _dsr.DataSeries[0].Last; // последние значение индикатора DSR
-                if (_trendDSR == 0) // если 0 тренд вниз - фаза роста закончилась
-                {
-                    phaseGrowth = false; //выключаем
-                    _calculationGP = true; //  разрешаем считать заново
-                }
-            }*/
-
             if (positions.Count == 0) // логика входа
             {
                 СalculationPhaseGrowthExtremeCandels(candles); // расчет фазы роста
@@ -318,13 +294,15 @@ namespace OsEngine.Robots
             {
                 // 2. Если  в течении 40 минут [2 Профита] было закрыто 2 прибыльных сделки,
                 // то в следующих сделках "Стоп-лосс" устанавливается на 5% [Стоп-лосс2].
-                // дальше пока не стал реализовывать т.к. практически невыполнимое условие // 3. После выключения "Фазы роста", когда будет следующая "Фаза роста", // "Стоп-лосс" снова будет ставиться на 3% [Стоп-лосс1].
+                // 3. После выключения "Фазы роста", когда будет следующая "Фаза роста",
+                // "Стоп-лосс" снова будет ставиться на 3% [Стоп-лосс1].
 
                 decimal profitLast = positionClose[positionClose.Count - 1].ProfitPortfolioPunkt;// профит последней следки
                 decimal profitLast2 = positionClose[positionClose.Count - 2].ProfitOperationPunkt;// профит предпоследней сделки
                 DateTime timeBackTrade = positionClose[positionClose.Count - 2].TimeClose; // время закрытия предп позы
                 DateTime timePeriodBack = timeBackTrade.AddMinutes(minutBackStopLoss2.ValueInt); // время учтенного периода
-                if (profitLast > 0 && profitLast2 > 0 && real_time < timePeriodBack)
+
+                if (profitLast > 0 && profitLast2 > 0 && real_time < timePeriodBack && phaseGrowth == true)
                 {
                     indent = stopLoss2.ValueDecimal * marketPrice / 100;  // отступ для стопа
                     priceOpenPos = _tab.PositionsLast.EntryPrice;  // цена открытия позиции
@@ -593,9 +571,15 @@ namespace OsEngine.Robots
         /// <summary>
         /// пользователь изменил настройки параметров
         /// </summary>
-        private void _ParametrsChangeUserы()
+        private void _ParametrsChangeUser()
         {
-            /*if (_dsr.ParametersDigit[0].Value != Longterm.ValueInt)
+            /*_dsr = IndicatorsFactory.CreateIndicatorByName("DSR", "DSR", false);
+            _dsr.ParametersDigit[0].Value = Longterm.ValueInt;
+            _dsr.ParametersDigit[1].Value = DSR1.ValueInt;
+            _dsr.ParametersDigit[2].Value = DSR2.ValueInt;
+            _dsr = (Aindicator)_tab.CreateCandleIndicator(_dsr, "Prime");
+            _dsr.Save();
+            if (_dsr.ParametersDigit[0].Value != Longterm.ValueInt)
             {
                 _dsr.ParametersDigit[0].Value = Longterm.ValueInt;
                 _dsr.Reload();
@@ -625,7 +609,7 @@ namespace OsEngine.Robots
         /// </summary>
         public override void ShowIndividualSettingsDialog()
         {
-            Window Uiss = new ScalperSettings();
+            Window Uiss = new ScalperSettings(this);
             Uiss.Show();
         }
 
