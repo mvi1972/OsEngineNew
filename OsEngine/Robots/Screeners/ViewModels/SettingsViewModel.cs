@@ -6,57 +6,26 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using OsEngine.Robots.Screeners.ViewModels.Base;
 
 namespace OsEngine.Robots.Screeners
 {
-    public class SettingsViewModel : INotifyPropertyChanged
+    // логическая часть отображения приложения
+    internal class SettingsViewModel : ViewModel
     {
-        private Phone selectedPhone;
-
-        public ObservableCollection<Phone> Phones { get; set; }
-
-        public Phone SelectedPhone
-        {
-            get { return selectedPhone; }
-            set
-            {
-                selectedPhone = value;
-                СallUpdate("SelectedPhone");
-            }
-        }
-
-        public SettingsViewModel()
-        {
-            Phones = new ObservableCollection<Phone>
-            {
-                new Phone { Title="iPhone 7", Company="Apple", Price=56000 },
-                new Phone {Title="Galaxy S7 Edge", Company="Samsung", Price =60000 },
-                new Phone {Title="Elite x3", Company="HP", Price=56000 },
-                new Phone {Title="Mi5S", Company="Xiaomi", Price=35000 }
-            };
-        }
-
-        // дальше реализация INotifyPropertyChanged
-        /// <summary>
-        /// обработчик события изменения свойств
-        /// </summary>
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected void СallUpdate(string name)  // сигнализирует об изменении свойств
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-        }
+        #region Заголовок окна
 
         /// <summary>
-        ///  сверяет значения данных и выдает сигнал об изменении
+        /// Заголовок окна
         /// </summary>
-        protected void Set<T>(ref T field, T value, [CallerMemberName] string name = "")
+        private string _Title = "Окно настроек";
+
+        public string Title
         {
-            if (!field.Equals(value))
-            {
-                field = value;
-                СallUpdate(name);
-            }
+            get { return _Title; }
+            set => Set(ref _Title, value);
         }
+
+        #endregion Заголовок окна
     }
 }

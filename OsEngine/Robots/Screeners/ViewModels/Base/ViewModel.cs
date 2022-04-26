@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace OsEngine.Robots.Screeners.ViewModels.Base
 {
-    internal abstract class ViewModelBase : INotifyPropertyChanged
+    internal abstract class ViewModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
