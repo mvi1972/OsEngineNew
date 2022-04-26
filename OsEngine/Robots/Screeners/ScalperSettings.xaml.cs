@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using OsEngine.Robots.Screeners;
+using static OsEngine.Robots.Phone;
 
 namespace OsEngine.Robots.Screeners
 {
@@ -23,8 +24,10 @@ namespace OsEngine.Robots.Screeners
         public ScalperSettings(Scalper bot)
         {
             InitializeComponent();
-            DataContext = bot;
-            robots.ItemsSource = bot.robots;
+            DataContext = new SettingsViewModel();
+            //DatGridRobots.ItemsSource = bot.Parameters;
+            //One_Colum.Binding = new Binding(Convert.ToString(bot.Test));
+            //DataContext = bot;
         }
     }
 }

@@ -950,6 +950,7 @@
     <Compile Include="Robots\Screeners\ScalperSettings.xaml.cs">
       <DependentUpon>ScalperSettings.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Robots\Screeners\SettingsViewModel.cs" />
     <Compile Include="Robots\Screeners\SmaScreener.cs" />
     <Compile Include="Robots\Trend\EnvelopTrend.cs" />
     <Compile Include="Robots\Trend\MomentumMacd.cs" />

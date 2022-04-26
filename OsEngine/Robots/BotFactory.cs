@@ -23,6 +23,7 @@ using OsEngine.Robots.Patterns;
 using OsEngine.Robots.Trend;
 using OsEngine.Robots.OnScriptIndicators;
 using OsEngine.Robots.Screeners;
+using static OsEngine.Robots.Phone;
 
 namespace OsEngine.Robots
 {
@@ -31,7 +32,7 @@ namespace OsEngine.Robots
         private static readonly Dictionary<string, Type> BotsWithAttribute = GetTypesWithBotAttribute();
 
         /// <summary>
-        /// list robots name / 
+        /// list robots name /
         /// список доступных роботов
         /// </summary>
         public static List<string> GetNamesStrategy()
@@ -102,7 +103,6 @@ namespace OsEngine.Robots
                 }
             }
 
-
             return resultTrue;
         }
 
@@ -125,7 +125,7 @@ namespace OsEngine.Robots
             {
                 bot = new Scalper(name, startProgram);
             }
- 
+
             if (nameClass == "SmaScreener")
             {
                 bot = new SmaScreener(name, startProgram);
@@ -290,7 +290,7 @@ namespace OsEngine.Robots
             return bot;
         }
 
-        static Dictionary<string, Type> GetTypesWithBotAttribute()
+        private static Dictionary<string, Type> GetTypesWithBotAttribute()
         {
             Assembly assembly = Assembly.GetAssembly(typeof(BotPanel));
             Dictionary<string, Type> bots = new Dictionary<string, Type>();
@@ -309,7 +309,6 @@ namespace OsEngine.Robots
         // Scripts
         public static List<string> GetScriptsNamesStrategy()
         {
-
             if (Directory.Exists(@"Custom") == false)
             {
                 Directory.CreateDirectory(@"Custom");
@@ -518,7 +517,6 @@ namespace OsEngine.Robots
                 cp.GenerateInMemory = true;
                 cp.IncludeDebugInformation = true;
                 cp.TempFiles.KeepFiles = false;
-
 
                 string folderCur = AppDomain.CurrentDomain.BaseDirectory + "Engine\\Temp";
 
@@ -732,7 +730,6 @@ namespace OsEngine.Robots
                 while (reader.EndOfStream == false)
                 {
                     _namesWithParam.Add(reader.ReadLine());
-
                 }
                 reader.Close();
             }
@@ -782,7 +779,6 @@ namespace OsEngine.Robots
                     }
                     if (numThread == 2)
                     {
-
                     }
                     bot.Delete();
                 }
@@ -799,6 +795,5 @@ namespace OsEngine.Robots
         }
 
         public static event Action<List<string>> LoadNamesWithParamEndEvent;
-
     }
 }
